@@ -163,7 +163,7 @@ class MiniDb < DbVariables
 
   def check_db_name(db_name)
     raw_name = db_name.split(/_\d+$/)[0] # odetnij "_<JakasLiczba>", ale tylko na końcu.
-    # To działa, jednak jeśli ponownie utworzymy bazę z tą samą nazwą to w ten sposób nadpiszemy poprzednio
+    # TODO: To działa, jednak jeśli ponownie utworzymy bazę z tą samą nazwą to w ten sposób nadpiszemy poprzednio
     # utworzoną bazę "z kolejnym numerem", np. utworzymy app, teraz ponownie app, otrzymamy app_2, jeśli po raz
     # trzeci utworzymy app to nadpiszemy app_2.
     # Więc w tym miejscu należaloby przeszukać zestaw @databases_names za zawierającymi ten sam "raw_name" i 
