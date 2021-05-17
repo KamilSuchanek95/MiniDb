@@ -7,6 +7,10 @@ class MiniDb < DbVariables
   @@current_db_name  = ""
   @@databases_names = Set.new
   @@databases       = Array.new
+  
+  @transaction_rollup = Array.new
+  @transaction_changed_variables = Array.new
+  @transaction_state = -1
 
   def initialize(db_name)
     # TODO: check if name is in use and add postfix with number eventually
@@ -18,8 +22,13 @@ class MiniDb < DbVariables
     @name             = db_name # name of database
     @db_variables     = DbVariables.new # create list variables
   end
-  
+
   def set name, value, variables_list = self.db_variables.variables_list
+    if(transaction_in_progress? and variable_unchanged?)
+      @transaction_changed_variables << name
+      @transaction_rollup[@transaction_state] << "set #{name} #{value}"
+    end
+
     super
   end
 
@@ -33,6 +42,28 @@ class MiniDb < DbVariables
 
   def count value, variables_list = self.db_variables.variables_list
     super
+  end
+
+  def begin_transaction
+    @transaction_state += 1
+    @transaction_rollup << Array.new # [@transaction_state][el]
+    #@transaction_changed_variables << Array.new
+  end
+
+  def commit_transactions
+    @transaction_state = -1
+    @transaction_rollup = Array.new
+    @transaction_changed_variables = Array.new
+  end
+
+  def rollup_transaction
+    # TODO: parse @transaction_rollup to blocks 
+    #       clean @transaction_rollup and changed raviables list
+    @transaction_rollup[@transaction_state].each do |change|
+      # ... parse and invert changes.
+    end
+
+    @transaction_state -= 1
   end
 
   # return reference to database
@@ -55,10 +86,6 @@ class MiniDb < DbVariables
     @@databases_names
   end
 
-  def self.all
-    @@databases.inspect
-  end
-
   def self.count
     @@databases.count
   end
@@ -67,6 +94,14 @@ class MiniDb < DbVariables
 
   def database_exists? name
     @@databases.include?(name)
+  end
+
+  def variable_unchanged? # return false if we want to change them, so !()
+    !(@transaction_changed_variables.include?(name))
+  end
+
+  def transaction_in_progress?
+    (@transaction_state > -1)
   end
 
 end
