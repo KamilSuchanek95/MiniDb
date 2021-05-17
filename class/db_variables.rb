@@ -13,17 +13,17 @@ class DbVariables
   end
 
   def get name, variables_list = @variables_list
-    # TODO: If name doesnt exist? => nil, "NULL"
-    variables_list[name.to_sym] if validate_name name
+    # jeśli mamy taką zmienną to ją zwróć, jesli nie, zwracamy NULL
+    validate_name(name) ? variables_list[name.to_sym] : "NULL"
   end
   
   def delete name, variables_list = @variables_list
-    # If that key doesnt exist => nil
+    # Jeśli takiej zmiennej i tak nie było to zwróci nil
     variables_list.delete(name.to_sym) if validate_name name
   end
 
   def count value, variables_list = @variables_list
-    # count or 0, fine.
+    # Zwróci 0 albo więcej.
     variables_list.values.count(value) if validate_value value
   end
 
