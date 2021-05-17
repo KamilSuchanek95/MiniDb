@@ -27,3 +27,38 @@ db1.db_variables.delete "var2"
 out1 = db1.get "var2"
 puts "get after delete:2 ==> " + (out1 || "nil")
 
+p 'rollback first:'
+db1.rollback_transaction
+
+
+p 'begin and rollback:'
+db1.begin_transaction
+db1.rollback_transaction
+
+
+
+p 'begin, set, rollback'
+db1.begin_transaction
+db1.set "tvar1", "tval1"
+db1.rollback_transaction
+
+p 'begin, set, commit'
+db1.begin_transaction
+db1.set "tvar1", "tval1"
+db1.commit_transactions
+
+  p 'nested transactions:'
+  p 'begin set and start nested'
+  db1.begin_transaction
+  db1.set "t1_var2", "t1_val2"
+  db1.begin_transaction
+
+    p 'set nested(2) variable'
+    db1.set "t2_var2", "t2_val2"
+    p 'rollback nested changes'
+    db1.rollback_transaction
+
+  db1.rollback_transaction
+
+
+binding.pry()
