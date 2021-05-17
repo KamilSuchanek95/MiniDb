@@ -9,7 +9,6 @@ class MiniDb < DbVariables
   @@databases_names = Set.new
   @@databases       = Array.new
 
-
   def initialize(db_name)
     # TODO: check if name is in use and add postfix with number eventually
     @@databases_names <<  db_name # save name to unique list
@@ -67,18 +66,12 @@ class MiniDb < DbVariables
 
   def rollback_transaction
     if transaction_in_progress?
-      # TODO: parse @transaction_rollback to blocks 
-      #       clean @transaction_rollback and changed raviables list
-      # @transaction_rollback.flatten.empty?
-       binding.pry
       @transaction_rollback[@transaction_state].each do |change|
-        # ... parse and invert changes.
         command, name, value = change.split(" ")
-        # command == "set" ? self.send(command.to_sym, name, value) : self.send(command.to_sym, name)
         command == "set" ? self.set(name, value) : self.delete(name)
       end
-      @transaction_changed_variables[@transaction_state] = []
-      @transaction_rollback[@transaction_state] = []
+      @transaction_changed_variables.pop
+      @transaction_rollback.pop
       @transaction_state -= 1
     end
   end
@@ -114,7 +107,7 @@ class MiniDb < DbVariables
   end
 
   def variable_unchanged? name
-    !(@transaction_changed_variables.include?(name))
+    !(@transaction_changed_variables.flatten.include?(name))
   end
 
   def transaction_in_progress?
