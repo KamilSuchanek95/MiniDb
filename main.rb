@@ -3,6 +3,7 @@ require_relative './class/db_variables.rb'
 
 require 'pry'
 
+puts `rspec`
 
 db1 = MiniDb.new("app1")
 
@@ -35,8 +36,6 @@ p 'begin and rollback:'
 db1.begin
 db1.rollback
 
-
-
 p 'begin, set, rollback'
 db1.begin
 db1.set "tvar1", "tval1"
@@ -60,5 +59,4 @@ db1.commit
 
   db1.rollback
 
-
-binding.pry()
+binding.pry

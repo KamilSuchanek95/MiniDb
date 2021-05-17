@@ -14,7 +14,11 @@ class DbVariables
 
   def get name, variables_list = @variables_list
     # jeśli mamy taką zmienną to ją zwróć, jesli nie, zwracamy NULL
-    validate_name(name) ? variables_list[name.to_sym] : "NULL"
+    if validate_name(name) and variable_exists?(name)
+      return variables_list[name.to_sym]
+    else
+      return "NULL"
+    end
   end
   
   def delete name, variables_list = @variables_list
@@ -29,6 +33,12 @@ class DbVariables
 
 
   private
+
+
+
+  def variable_exists? name, variables_list = self.variables_list
+    variables_list.include?(name.to_sym)
+  end
 
   def validate_name name
     name.respond_to?(:to_sym)

@@ -37,7 +37,7 @@ class MiniDb < DbVariables
       @transaction_rollback[@transaction_state] << "#{command} #{name} #{old_value}"
     end
 
-    super
+    return super
   end
   
   
@@ -46,18 +46,19 @@ class MiniDb < DbVariables
     # Tutaj analogicznie, jednak jedyną radą na usuwanie jest dodawanie, więc krócej.
     if(transaction_in_progress? and variable_unchanged?(name))
       @transaction_changed_variables[@transaction_state] << name
-      @transaction_rollback[@transaction_state] << "set #{name}"
+      value = self.get name
+      @transaction_rollback[@transaction_state] << "set #{name} #{value}"
     end
 
-    super
+    return super
   end
 
   def get name, variables_list = self.db_variables.variables_list
-    super
+    return super
   end
 
   def count value, variables_list = self.db_variables.variables_list
-    super
+    return super
   end
 
   # Rozpocznij transakcję
@@ -67,6 +68,7 @@ class MiniDb < DbVariables
     # dołącz podmacierz, każda transakcja posiada własną podmacierz na zmiany, pod powyższym indeksem.
     @transaction_rollback           <<  Array.new # ARRAY[@transaction_state][change]
     @transaction_changed_variables  <<  Array.new
+    return nil
   end
 
   # Zatwierdź wszystkie transakcje
@@ -77,6 +79,7 @@ class MiniDb < DbVariables
       # oraz zreseruj macierze zmian
       @transaction_rollback           = Array.new
       @transaction_changed_variables  = Array.new
+      return nil
     else
       "NO TRANSACTION"
     end
@@ -98,6 +101,7 @@ class MiniDb < DbVariables
       @transaction_changed_variables.pop
       @transaction_rollback.pop
       @transaction_state -= 1
+      return nil
     else
       "NO TRANSACTION"
     end
@@ -145,19 +149,19 @@ class MiniDb < DbVariables
   end
 
   def variable_unchanged? name
-    !(@transaction_changed_variables.flatten.include?(name))
+    # !(@transaction_changed_variables.flatten.include?(name))
+    !(@transaction_changed_variables[@transaction_state].include?(name))
   end
 
   def transaction_in_progress?
     (@transaction_state > -1)
   end
 
-  def variable_exists? name
-    self.db_variables.variables_list.include?(name.to_sym)
+  def variable_exists? name, variables_list = self.db_variables.variables_list
+    return super
   end
 
   def check_db_name(db_name)
-    db_name = check_db_name(db_name) if database_exists?(db_name)
     raw_name = db_name.split(/_\d+$/)[0] # odetnij "_<JakasLiczba>", ale tylko na końcu.
     # To działa, jednak jeśli ponownie utworzymy bazę z tą samą nazwą to w ten sposób nadpiszemy poprzednio
     # utworzoną bazę "z kolejnym numerem", np. utworzymy app, teraz ponownie app, otrzymamy app_2, jeśli po raz
