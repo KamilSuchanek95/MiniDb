@@ -45,21 +45,21 @@ describe MiniDb do
   context "Sprawdzanie działania transakcji" do
     
     #5
-    it "powinno poinformować o braku aktywnej transakcji po wywołaniu commit" do
+    it "#5 powinno poinformować o braku aktywnej transakcji po wywołaniu commit" do
       md = MiniDb.new "name1"
       message = md.commit
       expect(message).to eq "NO TRANSACTION"
     end
 
     #6
-    it "powinno poinformować o braku aktywnej transakcji po wywołaniu rollback" do
+    it "#6 powinno poinformować o braku aktywnej transakcji po wywołaniu rollback" do
       md = MiniDb.new "name1"
       message = md.rollback
       expect(message).to eq "NO TRANSACTION"
     end
 
     #7
-    it "powinno rozpocząć i zakończyć transakcję bez problemów" do
+    it "#7 powinno rozpocząć i zakończyć transakcję bez problemów" do
       md = MiniDb.new "name1"
       md.begin
       md.rollback
@@ -68,7 +68,7 @@ describe MiniDb do
     end
 
     #8
-    it "powinno zachować zapisaną zmienną w transakcji" do
+    it "#8 powinno zachować zapisaną zmienną w transakcji" do
       md = MiniDb.new "name1"
       md.begin
       md.set "Tzmienna1", "Twartość1"
@@ -78,7 +78,7 @@ describe MiniDb do
     end
 
     #9
-    it "powinno zachować zapisaną zmienną w transakcji zagnieżdżonej wewnętrznej" do
+    it "#9 powinno zachować zapisaną zmienną w transakcji zagnieżdżonej wewnętrznej" do
       md = MiniDb.new "name1"
       md.begin
       md.begin
@@ -89,7 +89,7 @@ describe MiniDb do
     end    
 
     #10
-    it "powinno zachować zapisaną zmienną w transakcji zagnieżdżonej zewnętrznej" do
+    it "#10 powinno zachować zapisaną zmienną w transakcji zagnieżdżonej zewnętrznej" do
       md = MiniDb.new "name1"
       md.begin
       md.set "Tzmienna1", "Twartość1"
@@ -100,7 +100,7 @@ describe MiniDb do
     end
 
     #11
-    it "powinno usunąć zmienne z transakcji" do
+    it "#11 powinno usunąć zmienne z transakcji" do
       md = MiniDb.new "name1"
       md.begin
       md.set "Tzmienna1", "Twartość1"
@@ -110,7 +110,7 @@ describe MiniDb do
     end
 
     #12
-    it "powinno usunąć zmienne z transakcji wewnętrznej" do
+    it "#12 powinno usunąć zmienne z transakcji wewnętrznej" do
       md = MiniDb.new "name1"
       md.begin
       md.begin
@@ -122,7 +122,7 @@ describe MiniDb do
     end
 
     #13
-    it "powinno usunąć zmienne z transakcji zewnętrznej" do
+    it "#13 powinno usunąć zmienne z transakcji zewnętrznej" do
       md = MiniDb.new "name1"
       md.begin
       md.set "Tzmienna1", "Twartość1"
@@ -134,7 +134,7 @@ describe MiniDb do
     end
 
     #14 
-    it "powinno zachować zmienną utworzoną w zewnętrznej transakcji a usuniętej w wewnętrznej lecz wycofanej" do
+    it "#14 powinno zachować zmienną utworzoną w zewnętrznej transakcji a usuniętej w wewnętrznej lecz wycofanej" do
       md = MiniDb.new "name1"
       md.set "zmienna1", "wartość1"
         md.begin
@@ -151,7 +151,7 @@ describe MiniDb do
     end
 
     #14'
-    it "powinno zachować zmianę wartości w transakcji zewnetrznej pomimo ponownej zmiany w transakcji wewnętrznej" do
+    it "#14' powinno zachować zmianę wartości w transakcji zewnetrznej pomimo ponownej zmiany w transakcji wewnętrznej" do
       md = MiniDb.new "name1"
       md.set "zmienna1", "wartość1"
         md.begin

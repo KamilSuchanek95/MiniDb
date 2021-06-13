@@ -3,6 +3,8 @@ require_relative './class/db_variables.rb'
 
 require 'pry'
 
+
+
 puts `rspec`
 
 db1 = MiniDb.new("app1")
@@ -27,6 +29,8 @@ puts "get after delete:1 ==> " + (out1 || "nil")
 db1.db_variables.delete "var2"
 out1 = db1.get "var2"
 puts "get after delete:2 ==> " + (out1 || "nil")
+
+binding.pry
 
 p 'rollback first:'
 db1.rollback

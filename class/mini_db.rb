@@ -2,7 +2,7 @@ require_relative 'db_variables'
 require 'set'
 
 
-class MiniDb < DbVariables
+class MiniDb
   attr_accessor :db_variables, :name
 
   # @@current_db_name  = ""
@@ -24,7 +24,7 @@ class MiniDb < DbVariables
     @transaction_state              = -1
   end
 
-  def set name, value, variables_list = self.db_variables.variables_list
+  def set name, value
     # Czy transakcja jest w toku oraz czy ta zmienna była już zmieniana? 
     if(transaction_in_progress? and variable_unchanged?(name))
       # jeśli już była to zapisz ją w tablicy zmian
@@ -37,12 +37,12 @@ class MiniDb < DbVariables
       @transaction_rollback[@transaction_state] << "#{command} #{name} #{old_value}"
     end
 
-    return super
+    @db_variables.set name, value
   end
   
   
   
-  def delete name, variables_list = self.db_variables.variables_list
+  def delete name
     # Tutaj analogicznie, jednak jedyną radą na usuwanie jest dodawanie, więc krócej.
     if(transaction_in_progress? and variable_unchanged?(name))
       @transaction_changed_variables[@transaction_state] << name
@@ -50,15 +50,15 @@ class MiniDb < DbVariables
       @transaction_rollback[@transaction_state] << "set #{name} #{value}"
     end
 
-    return super
+    @db_variables.delete name
   end
 
-  def get name, variables_list = self.db_variables.variables_list
-    return super
+  def get name
+    @db_variables.get name
   end
 
-  def count value, variables_list = self.db_variables.variables_list
-    return super
+  def count value
+    @db_variables.count value
   end
 
   # Rozpocznij transakcję
@@ -116,24 +116,22 @@ class MiniDb < DbVariables
   #     @@databases.select {|db| db.name == db_name}
   #   end
   # end
-  def select db_name 
+  def self.select db_name 
     database_exists? ? @@databases.select {|db| db.name == db_name} : nil
   end
 
-  def destroy db_name
+  def self.destroy db_name
     if database_exists?
       @@databases.delete {|db| db.name == db_name}
-
       @databases_names.delete db_name
     end
   end
-  # def destroy db_name
-  #   if database_exists?
-  #     @@databases.delete {|db| db.name == db_name}
-  #     @@current_db_name = "" if @@current_db_name == db_name
-  #     @databases_names.delete db_name
-  #   end
-  # end
+
+  def destroy
+    @@databases.delete {|db| db.name == self.db_name}
+    @@databases_names.delete self.db_name
+    'only this instance contain now data, but no longer is this in class memory'
+  end
 
   # Lista baz danych
   def self.list
@@ -157,8 +155,8 @@ class MiniDb < DbVariables
     (@transaction_state > -1)
   end
 
-  def variable_exists? name, variables_list = self.db_variables.variables_list
-    return super
+  def variable_exists? name
+    self.db_variables.variable_exists? name
   end
 
   def check_db_name(db_name)
