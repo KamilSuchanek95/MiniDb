@@ -1,5 +1,5 @@
 require_relative File.expand_path(File.dirname(__FILE__)).gsub('/spec', '')+'/class/mini_db.rb'
-require_relative File.expand_path(File.dirname(__FILE__)).gsub('/spec', '')+'/class/db_variables.rb'
+
 
 describe MiniDb do
   
