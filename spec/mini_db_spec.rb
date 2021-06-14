@@ -6,14 +6,14 @@ describe MiniDb do
   context "Spradzenie jak działają metody dziedziczone" do
     
     #1
-    it "powinno zwrócić NULL, ponieważ nie ma takiej zmiennej" do
+    it "#1 powinno zwrócić NULL, ponieważ nie ma takiej zmiennej" do
       md = MiniDb.new "name1"
       message = md.get "nie_ma_takiej"
       expect(message).to eq "NULL"
     end
 
     #2
-    it "powinno utworzyć nową zmienną" do
+    it "#2 powinno utworzyć nową zmienną" do
       md = MiniDb.new "name1"
       md.set "zmienna1", "wartość1"
       content = md.get "zmienna1"
@@ -21,7 +21,7 @@ describe MiniDb do
     end
 
     #3
-    it "powinno usunąć element" do
+    it "#3 powinno usunąć element" do
       md = MiniDb.new "name1"
       md.set "zmienna1", "wartość1"
       content = md.delete "zmienna1"
@@ -30,7 +30,7 @@ describe MiniDb do
     end
 
     #4
-    it "powinno podać liczbę zmiennych" do
+    it "#4 powinno podać liczbę zmiennych" do
       md = MiniDb.new "name1"
       md.set "zmienna1", "wartość1"
       md.set "zmienna2", "wartość2"
