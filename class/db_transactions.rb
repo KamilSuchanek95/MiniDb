@@ -28,7 +28,7 @@ class DbTransactions
   end
 
   def begin
-    init_transaction
+    init_new_transaction
     "TRANSACTION LEVEL #{@level + 1}"
   end
 
@@ -53,6 +53,14 @@ class DbTransactions
 
   def ready_to_transaction? var_name
     transaction_in_progress? and variable_unchanged?(var_name)
+    # Why variable must be unchanged?
+    #   -> Because that's the algorithm.
+    # There is no need to re-modify the variables that already existed at a specific transaction level 
+    #   => that is, to undo the changes, you only need to overwrite them once.
+    # Variables are viewed as "changed" separately at each level of the transaction.
+    # Undoing deletion by rewriting the variable is also unnecessary when it has been changed.
+    # If a variable has only been deleted without modification, it will also be saved only once, 
+    #   and future modifications (re-creation, changes) will not have to be undone as well.
   end
 
   def variable_unchanged? var_name
@@ -61,12 +69,16 @@ class DbTransactions
 
   def transaction_in_progress?
     @level > -1
+    # Transaction is in progress, when level is 0 or greater, 
+    # then each number is index of specific transaction
   end
 
   def complete_transaction
     @level                      = -1
     @operations_to_rollback     = Array.new
     @names_of_changed_variables = Array.new
+    # Completing a transaction resets the transaction level 
+    #   and clears the tables containing the rollback data.
   end
 
   def clear_current_transaction
@@ -75,14 +87,14 @@ class DbTransactions
     @level -= 1
   end
 
-  def init_transaction
+  def init_new_transaction
     @level += 1
-    @operations_to_rollback      <<  Array.new # ARRAY[@level][changes]
+    @operations_to_rollback      <<  Array.new # ARRAY[@level][lambdas_to_undo_changes]
     @names_of_changed_variables  <<  Array.new
   end
 
   def call_saved_lambdas_to_rollback_changes
-    @operations_to_rollback[@level].each { |change| change.call }
+    @operations_to_rollback[@level].each { |lambda_to_rollback_changes| lambda_to_rollback_changes.call }
   end
 
   # hmm ta nazwa to na pewno dobry pomysł?..

@@ -1,5 +1,6 @@
 require_relative 'db_transactions'
 require 'set'
+require 'pry'
 
 ##
 # This class creates and manage simple databases-in memory
@@ -9,11 +10,11 @@ class MiniDb
   @@databases       = Array.new
 
   def initialize(db_name)
-    @@databases_names <<  db_name
+    @name             = customize_db_name db_name # this line must be first.
+
+    @@databases_names <<  @name
     @@databases       <<  self
 
-    @name             = customize_db_name db_name
-    #@db_variables     = DbVariables.new
     @variables_list   = Hash.new
     @db_transactions  = DbTransactions.new self
   end
@@ -88,15 +89,17 @@ class MiniDb
   def customize_db_name(db_name)
     if database_exists? db_name
       raw_name = db_name.split(/_\d+$/)[0] # odetnij "_<JakasLiczba>", ale tylko na końcu.
-      # TODO: To działa, jednak jeśli ponownie utworzymy bazę z tą samą nazwą to w ten sposób nadpiszemy poprzednio
-      # utworzoną bazę "z kolejnym numerem", np. utworzymy app, teraz ponownie app, otrzymamy app_2, jeśli po raz
-      # trzeci utworzymy app to nadpiszemy app_2.
-      # Więc w tym miejscu należaloby przeszukać zestaw @databases_names za zawierającymi ten sam "raw_name" i 
-      # uciąć sobie z niego najwiekszy numer po podłodze.
-      number = db_name.slice(/\d+$/).to_i
-      number > 0 ? number +=1 : 2
-      db_name = raw_name + "_#{number}"
+      matched_names = @@databases_names.grep /#{raw_name}_\d+$/ # zwróć pasujące nazwy
+      
+      if matched_names.empty? # jeśli jeszcze nie było dubla 
+        db_name = "#{raw_name}_2" # to tylko dodaj _2 do nazwy
+      else # a jeśli do dubel to dostosuj nazwę : nazwabazy_N
+        numbers       = matched_names.map { |d| d.slice(/\d+$/).to_i } # numery takich samych nazw
+        new_number    = numbers.max + 1 # największy numer + 1
+        db_name = raw_name + "_#{new_number}" # nowa nazwa
+      end
     end
+    return db_name
   end
 
 end
