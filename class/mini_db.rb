@@ -60,7 +60,7 @@ class MiniDb
     @db_transactions.rollback
   end
 
-  #c.lass methods
+  #class methods
   def self.select db_name 
     database_exists? ? @@databases.select {|db| db.name == db_name} : nil
   end
