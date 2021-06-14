@@ -1,64 +1,63 @@
-
+##
+# This class managed transactions for MiniDb object of database.
 
 class DbTransactions
 
   def initialize(database)
-    @transaction_rollback           = Array.new
-    @transaction_changed_variables  = Array.new
-    @transaction_state              = -1
+    @operations_to_rollback      = Array.new
+    @names_of_changed_variables  = Array.new
+    @level                       = -1
 
     @database = database
   end
 
   def manage_transactions method, *args
     name = args[0].to_s
-    case method
-    when(:set)
-      value = args[1].to_s
-      # Czy transakcja jest w toku oraz czy ta zmienna była już zmieniana? 
-      if(transaction_in_progress? and variable_unchanged?(name))
-        # jeśli już była zmieniana w transakcji to zapisz ją w tablicy zmian
-        @transaction_changed_variables[@transaction_state] << name
-        #         nowa zmienna?  potem =>  nadpisz  :  usuń
-        command = variable_exists?(name) ? "set" : "delete"
-        # oraz ten sam warunek, jeśli chcemy ją potem nadpisać to zapiszemy w tej chwili starą wartość.
-        old_value = variable_exists?(name) ? @database.db_variables.get(name) : value
-        # i tworzymy zapis potrzebny do odkręcenia zmian
-        @transaction_rollback[@transaction_state] << "#{command} #{name} #{old_value}"
-      end
-    when(:delete)
-      # Tutaj analogicznie, jednak jedyną radą na usuwanie jest dodawanie, więc krócej.
-      if(transaction_in_progress? and variable_unchanged?(name))
-        @transaction_changed_variables[@transaction_state] << name
+    
+    if ready_to_transaction? name
+      case method
+      when :set
+        value = args[1].to_s
+        # Czy transakcja jest w toku oraz czy ta zmienna była już zmieniana? 
+      
+          # jeśli już była zmieniana w transakcji to zapisz ją w tablicy zmian
+        @names_of_changed_variables[@level] << name
+          #         nowa zmienna?  potem =>  nadpisz  :  usuń
+          # command = variable_exists?(name) ? "set" : "delete"
+          # oraz ten sam warunek, jeśli chcemy ją potem nadpisać to zapiszemy w tej chwili starą wartość.
+          # old_value = variable_exists?(name) ? @database.db_variables.get(name) : value
+          # i tworzymy zapis potrzebny do odkręcenia zmian
+          # @operations_to_rollback[@level] << "#{command} #{name} #{old_value}"
+        if @database.variable_exists? name
+          old_value = @database.db_variables.get(name)
+          @operations_to_rollback[@level] << -> {@database.set(name, old_value)}
+        else
+          @operations_to_rollback[@level] << -> {@database.delete(name)}
+        end
+      when :delete
+        # Tutaj analogicznie, jednak jedyną radą na usuwanie jest dodawanie, więc krócej.
+        @names_of_changed_variables[@level] << name
         value = @database.db_variables.get name
-        @transaction_rollback[@transaction_state] << "set #{name} #{value}"
+        #@operations_to_rollback[@level] << "set #{name} #{value}"
+        @operations_to_rollback[@level] << -> {@database.set(name, value)}
+      else
+        'This method can only be used with set and delete commands'
       end
-    #else
-      #'This method can only be used with set and delete commands'
     end
   end
 
   def begin
     # zwiększ liczbę transakcji, 0, to jedna, 1 to dwie, ta zmienna posłuży za index do operowania zmianami
-    @transaction_state += 1
+    @level += 1
     # dołącz podmacierz, każda transakcja posiada własną podmacierz na zmiany, pod powyższym indeksem.
-    @transaction_rollback           <<  Array.new # ARRAY[@transaction_state][changes]
-    @transaction_changed_variables  <<  Array.new
-    "TRANSACTION LEVEL #{@transaction_state + 1}"
+    @operations_to_rollback      <<  Array.new # ARRAY[@level][changes]
+    @names_of_changed_variables  <<  Array.new
+    "TRANSACTION LEVEL #{@level + 1}"
   end
 
   # Zatwierdź wszystkie transakcje
   def commit
-    if transaction_in_progress?
-      # przywróć wartość początkową -1
-      @transaction_state = -1
-      # oraz zreseruj macierze zmian
-      @transaction_rollback           = Array.new
-      @transaction_changed_variables  = Array.new
-      return nil
-    else
-      "NO TRANSACTION"
-    end
+    transaction_in_progress? ? complete_transaction : "NO TRANSACTION"
   end
 
   # Wycofaj transakcję
@@ -66,18 +65,15 @@ class DbTransactions
     # Czy transakcja jest w toku?
     if transaction_in_progress?
       # dla każdej zmiany w tejże transakcji:
-      @transaction_rollback[@transaction_state].each do |change| 
+      @operations_to_rollback[@level].each do |change| 
         # wyodrębij metodę (set/delete), nazwę zmiennej oraz jej wartość
-        command, name, value = change.split(" ")
+        # command, name, value = change.split(" ")
         # w celu odwrócenia naniesionych w trakcie transakcji zmian
-        command == "set" ? @database.db_variables.set(name, value) : @database.db_variables.delete(name)
+        # command == "set" ? @database.db_variables.set(name, value) : @database.db_variables.delete(name)
+        change.call
       end
-      # usuń ostatnie elementy macierzy zmian (znajdują się pod aktualnym indeksem transakcji)
-      # oraz przywróć wartość początkową -1
-      @transaction_changed_variables.pop
-      @transaction_rollback.pop
-      @transaction_state -= 1
-      "Level #{@transaction_state + 2} TRANSACTION ROLLED BACK\nCURRENT TRANSACTION LEVEL IS #{@transaction_state + 1}"
+      clear_current_transaction
+      "Level #{@level + 2} TRANSACTION ROLLED BACK\nCURRENT TRANSACTION LEVEL IS #{@level + 1}"
     else
       "NO TRANSACTION"
     end
@@ -85,21 +81,33 @@ class DbTransactions
 
 
 
-
+  
   private
 
+  def ready_to_transaction? name
+    transaction_in_progress? and variable_unchanged?(name)
+  end
 
   def variable_unchanged? name
-    # !(@transaction_changed_variables.flatten.include?(name))
-    !(@transaction_changed_variables[@transaction_state].include?(name))
+    # !(@names_of_changed_variables.flatten.include?(name))
+    !(@names_of_changed_variables[@level].include?(name))
   end
 
   def transaction_in_progress?
-    (@transaction_state > -1)
+    @level > -1
   end
 
-  def variable_exists? name
-    @database.db_variables.variable_exists? name
+  def complete_transaction
+    @level                      = -1
+    @operations_to_rollback     = Array.new
+    @names_of_changed_variables = Array.new
   end
 
+  def clear_current_transaction
+    # usuń ostatnie elementy macierzy zmian (znajdują się pod aktualnym indeksem transakcji)
+    # oraz przywróć wartość początkową -1
+    @names_of_changed_variables.pop
+    @operations_to_rollback.pop
+    @level -= 1
+  end
 end

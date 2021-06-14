@@ -42,6 +42,10 @@ class MiniDb
     @db_variables.count value
   end
 
+  def variable_exists? name
+    self.db_variables.variable_exists? name
+  end
+
   # methods for transactions
   def begin
     @db_transactions.begin
@@ -67,26 +71,21 @@ class MiniDb
     end
   end
 
+  def self.list
+    @@databases_names
+  end
+
   # def destroy
     # @@databases.delete {|db| db.name == self.db_name}
     # @@databases_names.delete self.db_name
     # 'only this instance contain now data, but no longer is this in class memory'
   # end
 
-  # Lista baz danych
-  def self.list
-    @@databases_names
-  end
-
 
   private
 
   def database_exists? name
     @@databases_names.include?(name)
-  end
-
-  def variable_exists? name
-    self.db_variables.variable_exists? name
   end
 
   def check_db_name(db_name)

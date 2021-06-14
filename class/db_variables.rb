@@ -1,5 +1,4 @@
 class DbVariables
-  attr_accessor :variables_list
 
   def initialize
     @variables_list = Hash.new
@@ -32,8 +31,10 @@ class DbVariables
   end
 
   def variable_exists? name
-    variables_list.include?(name.to_sym)
+    @variables_list.include?(name.to_sym)
   end
+
+
 
   private
 

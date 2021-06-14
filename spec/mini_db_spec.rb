@@ -3,7 +3,7 @@ require_relative File.expand_path(File.dirname(__FILE__)).gsub('/spec', '')+'/cl
 
 describe MiniDb do
   
-  context "Spradzenie jak działają metody dziedziczone" do
+  context "Spradzenie jak działają wkomponowane metody" do
     
     #1
     it "#1 powinno zwrócić NULL, ponieważ nie ma takiej zmiennej" do
@@ -42,7 +42,7 @@ describe MiniDb do
     end
   end
 
-  context "Sprawdzanie działania transakcji" do
+  context "Sprawdzanie działania transakcji i metod DbTransactions" do
     
     #5
     it "#5 powinno poinformować o braku aktywnej transakcji po wywołaniu commit" do
