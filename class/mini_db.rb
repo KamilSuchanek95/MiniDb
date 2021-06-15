@@ -5,6 +5,7 @@ require 'pry'
 ##
 # This class creates and manage simple databases-in memory
 class MiniDb
+  attr_accessor :name
 
   @@databases_names = Set.new
   @@databases       = Array.new
@@ -20,26 +21,27 @@ class MiniDb
   end
 
   def destroy
-    @@databases.delete {|db| db.name == self.db_name}
-    @@databases_names.delete self.db_name
-    'Only this instance contain now data, but no longer is this in class memory'
+    @@databases.delete self
+    @@databases_names.delete @name
+    "Database #{@name} has been successfully removed from class memory\nThis object is last source of data"
   end
+
 
   # methods for variables
   def set var_name, value
     @db_transactions.manage_transactions __method__, var_name
     @variables_list[var_name.to_sym] = value.to_s
   end  
-  
-  def get var_name
-    variable_exists?(var_name) ? @variables_list[var_name.to_sym] : 'NULL'
-  end
-  
+
   def delete var_name
     @db_transactions.manage_transactions __method__, var_name
     @variables_list.delete var_name.to_sym
   end
 
+  def get var_name
+    variable_exists?(var_name) ? @variables_list[var_name.to_sym] : 'NULL'
+  end
+  
   def count value
     @variables_list.values.count value
   end
@@ -48,29 +50,14 @@ class MiniDb
     @variables_list.include?(var_name.to_sym)
   end
 
-  # methods for transactions
-  def begin
-    @db_transactions.begin
-  end
-
-  def commit
-    @db_transactions.commit
-  end
-
-  def rollback
-    @db_transactions.rollback
-  end
+  # methods for transactions  - only delegations to DbTransactions class
+  def begin;    @db_transactions.begin    end
+  def commit;   @db_transactions.commit   end
+  def rollback; @db_transactions.rollback end
 
   #class methods
   def self.select db_name 
-    database_exists? ? @@databases.select {|db| db.name == db_name} : nil
-  end
-
-  def self.destroy db_name
-    if database_exists?
-      @@databases.delete {|db| db.name == db_name}
-      @databases_names.delete db_name
-    end
+    @@databases_names.include?(db_name) ? @@databases.find {|db| db.name == db_name} : nil
   end
 
   def self.list
@@ -82,10 +69,11 @@ class MiniDb
 
   private
 
+
   def database_exists? db_name
     @@databases_names.include?(db_name)
   end
-
+  
   def customize_db_name(db_name)
     if database_exists? db_name
       raw_name = db_name.split(/_\d+$/)[0] # odetnij "_<JakasLiczba>", ale tylko na końcu.
